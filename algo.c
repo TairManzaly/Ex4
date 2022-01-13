@@ -2,10 +2,22 @@
 // Created by tairm on 1/10/2022.
 #include <stdio.h>
 #include <stdlib.h>
-#include "nodes.c"
-#include "minHeap.c"
 #include "graph.h"
 #define INFINITY 9999
+pnode graph;
+int weight;
+void  build_graph_cmd(pnode *head){
+    int size = 0;
+    scanf("%d",&size);
+    D(head,size);
+    char n = 0;
+    int i = 0;
+    while(i<size) {
+        scanf("%c", n);
+        insert_node_cmd(head, n);
+        i++;
+    }
+}
 
 void insert_node_cmd(pnode *head, int node_num){
     pnode current = head;
@@ -160,6 +172,14 @@ void D(pnode *head, int node_num){
 //
 //
 //}
+typedef struct Dijkstra_Node{
+    pnode node;
+    int dist;
+    int tag;
+    struct Dijkstra_Node *prev; //for array of path
+    struct Dijkstra_Node *next;
+} dnode, *pdnode;
+
 void free_dij(pdnode arr) {
     while (arr != NULL){
         pdnode t = arr;
@@ -167,93 +187,157 @@ void free_dij(pdnode arr) {
         free(t);
     }
 }
-
-
-pdnode dijkstra(pnode n, int i){
-    pdnode head = NULL;
-    pdnode *t = &head;
-    while (n != NULL)
-    {
-        (*t) = (pdnode)malloc(sizeof(pdnode)); //allocate mamory
-        if ((*t) == NULL){
-            printf("Error");
+pnode dist_prev(pnode head, int i){
+    pdnode n = NULL;
+    pdnode *pn = &n;
+    while (head!= NULL){
+        *pn = (pnode) malloc(sizeof (pnode));
+        if(*pn == NULL) {
+            printf("There is not enough memory. Exiting.\n");
             return NULL;
         }
-        (*t)->node = n;
-        if (n->node_num == i){
-            (*t)->prev = (*t);
-            (*t)->weight = 0;
+        (*pn)->node = head;
+        if(head->node_num==i){// if the head is the src
+            (*pn)->prev = *pn;
+            (*pn)->dist = 0;
         }
         else{
-            (*t)->prev = NULL;
-            (*t)->weight = INFINITY ;
+            (*pn)->prev = NULL;
+            (*pn)->dist = INFINITY;
         }
-        (*t)->tag = 0;
-        (*t)->next = NULL;
-        t = &((*t)->next);
-        n = n->next;
-    }
-    return head;
-}
-
-pdnode min(pdnode head){
-    pdnode result = NULL;
-    while (head != NULL){
-        if (!head->tag && head->weight < INFINITY  && (result == NULL || result->weight < head->weight)){
-            result = head;
-        }
+        (*pn)->tag =0;
+        (*pn)->next =NULL;
+        pn = &((*pn))->next;
         head = head->next;
     }
-    if (result != NULL){
-        result->tag = 1;
-    }
-    return result;
+    return n;
 }
+pdnode min_neighbor(pdnode u){
+    pdnode res=NULL;
+    while (u!=NULL){
 
-
-pdnode getDijNode(int x, pdnode List){
-    while (List != NULL){
-        if (List->node->node_num == x){
-            return List;
+        if(!u->tag && u->dist<INFINITY && (res == NULL || res->dist < u->dist)){
+            res = u;
         }
-        List = List->next;
+        u = u->next;
     }
-    return NULL;
-}
-
-int S(pnode head, int src, int dest){  //The main function
-    pdnode list = dijkstra(head, src);
-    pdnode node_u = min(list);
-    while (node_u != NULL){
-        pedge Edge = node_u->node->edges;
-        while (Edge != NULL){
-            pdnode node_v = getDijNode(Edge->endpoint->node_num,list);
-            int dist = node_u->weight + Edge->weight;
-            if (node_v->weight > dist){
-                node_v->weight = dist;
-                node_v->prev = node_u;
-            }
-            Edge = Edge->next;
-        }
-        node_u = min(list);
+    if (res!=NULL){
+        res->tag = 1;
     }
-    int res = getDijNode(dest,list)->weight;
-    res = (res == INFINITY )? -1: res;
-    free_dij(list);
     return res;
 }
 
 
 
+//pdnode getDiNode(int x, pdnode List){
+//    while (List != NULL){
+//        if (List->node->node_num == x){
+//            return List;
+//        }
+//        List = List->next;
+//    }
+//    return NULL;
 
+int S(pnode head, int src, int dest){
+    pdnode src_node = dist_prev(head,src);
+    pdnode v = min_neighbor(src_node);
+    pdnode u = NULL;
+    while (v!=NULL){
+        pedge e = v->node->edges;
+        while (e !=NULL){
 
-int main(){
-        struct GRAPH_NODE_ *pnode = NULL;
-        struct GRAPH_NODE_ **head = NULL;
-        head = (struct GRAPH_NODE_*)malloc(1*sizeof(struct GRAPH_NODE_));
-        if (head == NULL){
-            printf("There is not enough memory. Exiting.\n");
-            return 0;
+            while (src_node != NULL){
+                if (src_node->node->node_num == e->endpoint->node_num){
+                   u=src_node;
+                }
+                src_node= src_node->next;
+            }
+            int weight = v->dist + e->weight;
+            if(weight< u->dist){
+                u->dist = weight;
+                u->prev = u;
+            }
+            e = e->next;
+
         }
-        *head = pnode;
+        u = min_neighbor(dist_prev(head,src));
+    }
+    int ans = min_neighbor(u)->dist;
+    return ans;
+
 }
+
+void swap(int* arr, int i, int j){
+    int temp = arr[i];
+    arr[i]= arr[j];
+    arr[j] = temp;
+}
+
+void permutation_array(int* arr, int len){
+    int curr = 0;
+    for (int i = 0; i < len-1; ++i){
+        int dist = S(graph, arr[i], arr[i+1]);
+        if (dist == -1){
+            curr = INFINITY;
+            return;
+        }
+        curr += dist;
+    }
+    if (curr < weight){
+        weight = curr;
+    }
+}
+
+void arr_input(int* a,int* b, int len) {
+    for (int i = 0; i < len; ++i){
+        b[i] = a[i];
+    }
+}
+
+
+void check( int i ,int* arr, int len){
+    if (i == len -1 ){
+        int current = 0;
+        for (int j = 0; j < len-1; ++j){
+            int dist = S(graph, arr[j], arr[i+1]);
+            if (dist == -1){
+                current = INFINITY;
+                return;
+            }
+            current += dist;
+        }
+        if (current < weight){
+            weight = current;
+        }
+        return;
+    }
+    for (int j = i; j < len; ++j) {
+        int* new = (int*)(calloc(len, sizeof(int)));
+        arr_input(arr,new,len);
+        swap(new,i, j);
+        check(i + 1, new, len);
+        free(new);
+    }
+}
+
+int T(pnode h){   ////The main function
+    weight = INFINITY ;
+    int l = 0;
+    graph = h;
+    scanf("%d", &l);
+    int *arr = (int *) (calloc(l, sizeof(int)));
+    for (int i = 0; i < l; i++) {
+        scanf("%d", &arr[i]);
+    }
+    int *new = (int *) (calloc(l, sizeof(int)));
+    arr_input(arr,new,l);
+    check(0,new,l);
+    free(arr);
+    free(new);
+    if (weight == INFINITY){
+        weight = -1;
+    }
+    return weight;
+}
+
+
