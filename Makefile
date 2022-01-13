@@ -1,3 +1,4 @@
+CC=gcc
 CFLAGS = -Wall -g
 
 clean:
@@ -5,7 +6,11 @@ clean:
 
 all: graph
 
-graph: graph.o
-	gcc $(CFLAGS) -o graph algo.o
+graph: main.o algo.o
+	$(CC) $(CFLAGS) -o graph main.o algo.o
+
 algo.o: algo.c graph.h
-	gcc $(CFLAGS) -c algo.c
+	$(CC) $(CFLAGS) -c algo.c
+
+main.o: main.c graph.h
+	$(CC) $(FLAGS) -c main.c
