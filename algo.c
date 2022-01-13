@@ -9,53 +9,53 @@ int weight;
 void  build_graph_cmd(pnode *head){
     int size = 0;
     scanf("%d",&size);
-    D(head,size);
+//    D(head,size);
     char n = 0;
     int i = 0;
     while(i<size) {
-        scanf("%c", n);
+        scanf("%c", &n);
         insert_node_cmd(head, n);
         i++;
     }
 }
 
 void insert_node_cmd(pnode *head, int node_num){
-    pnode current = head;
-    while (current->next!=NULL && current->node_num!=node_num) {
-        current = current->next;
+    pnode *current = head;
+    while ((*current)!=NULL && (*current)->node_num!=node_num) {
+        *current = (*current)->next;
     }
     /* now we can add a new variable */
-    if (current->node_num!=node_num){
-        current->next = (struct GRAPH_NODE_*) malloc(sizeof(struct GRAPH_NODE_));
-        current->next->node_num = node_num;
-        current->next->next = NULL;
+    if ((*current)->node_num!=node_num){
+        (*current)->next = (struct GRAPH_NODE_*) malloc(sizeof(struct GRAPH_NODE_));
+        (*current)->next->node_num = node_num;
+        (*current)->next->next = NULL;
     }
 }
 //(1)A:
 void insert_edge_cmd(pnode *head, int weight, pnode endpoint, int node_num){
-    pnode current = head;
-    while (current->node_num!=node_num && current->next!=NULL) {
-        current = current->next;
+    pnode *current = head;
+    while ((*current)->node_num!=node_num && (*current)->next!=NULL) {
+        *current = (*current)->next;
     }
     /* now we can add a new variable */
-    if(current->node_num == node_num){
-        pedge edges = current->edges;
+    if((*current)->node_num == node_num){
+        pedge edges = (*current)->edges;
         while((edges->next) != NULL){
             edges = edges->next;
         }
-        edges->next = (struct edge_*) malloc(sizeof(struct edge_));
+        edges->next = (edge*) malloc(sizeof(struct edge_));
         edges->next->weight = weight;
         edges->next->endpoint = endpoint;
         edges->next->next = NULL;
     }
-    else if (current->node_num!=node_num && current->next==NULL){
-        current->next->node_num = node_num;
-        current = current->next;
-        pedge edges = current->edges;
+    else if ((*current)->node_num!=node_num && (*current)->next==NULL){
+        (*current)->next->node_num = node_num;
+        *current = (*current)->next;
+        pedge edges = (*current)->edges;
         while((edges->next) != NULL){
             edges = edges->next;
         }
-        edges->next = (struct edge_*) malloc(sizeof(struct edge_));
+        edges->next = ( edge*) malloc(sizeof(struct edge_));
         edges->next->weight = weight;
         edges->next->endpoint = endpoint;
         edges->next->next = NULL;
@@ -65,48 +65,48 @@ void insert_edge_cmd(pnode *head, int weight, pnode endpoint, int node_num){
 //(3)
 void delete_node_cmd(pnode *head, int node_num){
     //start from the first link
-    pnode n = head;
-    pnode current = head;
+    pnode *n = head;
+    pnode *current = head;
     pnode previous = NULL;
     //if list is not empty
-    if(n != NULL) {
+    if((*n) != NULL) {
         //navigate through list
-        while(current->node_num != node_num) {
+        while((*current)->node_num != node_num) {
             //if it is last node
-            if(current->next != NULL) {
+            if((*current)->next != NULL) {
                 //store reference to current link
-                previous = current;
+                previous = *current;
                 //move to next link
-                current = current->next;
+                *current = (*current)->next;
             }
         }
         //found a match, update the link
         if(current == n) {
             //change first to point to next link
-            n = n->next;
+            *n = (*n)->next;
         }
-        else if(current->node_num == node_num){
+        else if((*current)->node_num == node_num){
             //bypass the current link
-            previous->next = current->next;
+            previous->next = (*current)->next;
         }
     }
 }
 //(2)
 void delete_out_edges_cmd(pnode *head, int node_num){
     //start from the first link
-    pnode currentNode = head;
+    pnode *currentNode = head;
     //if list is not empty
     if(head != NULL) {
         //navigate through list
-        while(currentNode->node_num != node_num) {
+        while((*currentNode)->node_num != node_num) {
             //if it is last node
-            if(currentNode->next != NULL) {
+            if((*currentNode)->next != NULL) {
                 //move to next link
-                currentNode = currentNode->next;
+                *currentNode = (*currentNode)->next;
             }
         }
-        if (currentNode->node_num==node_num){
-            pedge current = currentNode->edges;
+        if ((*currentNode)->node_num==node_num){
+            pedge current = (*currentNode)->edges;
             pedge next = NULL;
 
             while (current != NULL){
@@ -115,30 +115,30 @@ void delete_out_edges_cmd(pnode *head, int node_num){
                 current = next;
             }
             // deref currentNode->edges to affect the real head back in the caller.
-            currentNode->edges = NULL;
+            (*currentNode)->edges = NULL;
         }
     }
 }
 //(4)
 void delete_in_edges_cmd(pnode *head, int node_num){
     //start from the first link
-    pnode currentNode = head;
+    pnode *currentNode = head;
     //if list is not empty
     if(head != NULL) {
         //navigate through list
-        while(currentNode->next != NULL) {
-            pedge currentEdge = currentNode->edges;
+        while((*currentNode)->next != NULL) {
+            pedge currentEdge = (*currentNode)->edges;
             pedge previousEdge = NULL;
             while(currentEdge->next != NULL){
-                if(currentEdge->endpoint==node_num){
+                if(currentEdge->endpoint->node_num == node_num){
                     //store reference to current link
                     previousEdge = currentEdge;
                     //move to next link
                     currentEdge = currentEdge->next;
                     //found a match, update the link
-                    if(currentEdge == currentNode->edges) {
+                    if(currentEdge == (*currentNode)->edges) {
                         //change first to point to next link
-                        currentNode->edges = currentNode->edges->next;
+                        (*currentNode)->edges = (*currentNode)->edges->next;
                     }
                     else{
                         //bypass the current link
@@ -147,31 +147,17 @@ void delete_in_edges_cmd(pnode *head, int node_num){
                 }
                 currentEdge = currentEdge->next;
             }
-            currentNode = currentNode->next;
+            *currentNode = (*currentNode)->next;
 
         }
     }
 }
 
 void D(pnode *head, int node_num){
-    delete_out_edges_cmd(*head, node_num);
-    delete_in_edges_cmd(*head, node_num);
-    delete_node_cmd(*head, node_num);
+    delete_out_edges_cmd(head, node_num);
+    delete_in_edges_cmd(head, node_num);
+    delete_node_cmd(head, node_num);
 }
-//void dijkstra(node head){
-//    int V = 0;
-//    node n = head;
-//    while(n.next!=NULL){
-//        V++;
-//        n = *n.next;
-//    }
-//
-//    struct MinHeap *Q = createMinHeap(V);
-//    double dist[V];
-//    double prev[V];
-//
-//
-//}
 typedef struct Dijkstra_Node{
     pnode node;
     int dist;
@@ -260,7 +246,8 @@ int S(pnode head, int src, int dest){
             e = e->next;
 
         }
-        u = min_neighbor(dist_prev(head,src));
+        pdnode un = dist_prev(head,src);
+        u = un;
     }
     int ans = min_neighbor(u)->dist;
     return ans;
@@ -273,22 +260,22 @@ void swap(int* arr, int i, int j){
     arr[j] = temp;
 }
 
-void permutation_array(int* arr, int len){
-    int curr = 0;
-    for (int i = 0; i < len-1; ++i){
-        int dist = S(graph, arr[i], arr[i+1]);
-        if (dist == -1){
-            curr = INFINITY;
-            return;
-        }
-        curr += dist;
-    }
-    if (curr < weight){
-        weight = curr;
-    }
-}
+//void per_array(int* arr, int len){
+//    int curr = 0;
+//    for (int i = 0; i < len-1; ++i){
+//        int dist = S(graph, arr[i], arr[i+1]);
+//        if (dist == -1){
+//            curr = INFINITY;
+//            return;
+//        }
+//        curr += dist;
+//    }
+//    if (curr < weight){
+//        weight = curr;
+//    }
+//}
 
-void arr_input(int* a,int* b, int len) {
+void arry(int* a,int* b, int len) {
     for (int i = 0; i < len; ++i){
         b[i] = a[i];
     }
@@ -313,7 +300,7 @@ void check( int i ,int* arr, int len){
     }
     for (int j = i; j < len; ++j) {
         int* new = (int*)(calloc(len, sizeof(int)));
-        arr_input(arr,new,len);
+        arry(arr,new,len);
         swap(new,i, j);
         check(i + 1, new, len);
         free(new);
@@ -330,7 +317,7 @@ int T(pnode h){   ////The main function
         scanf("%d", &arr[i]);
     }
     int *new = (int *) (calloc(l, sizeof(int)));
-    arr_input(arr,new,l);
+    arry(arr,new,l);
     check(0,new,l);
     free(arr);
     free(new);
@@ -339,5 +326,3 @@ int T(pnode h){   ////The main function
     }
     return weight;
 }
-
-
